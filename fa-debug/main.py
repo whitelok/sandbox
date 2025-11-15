@@ -59,7 +59,6 @@ class MyAttentionBlock(nn.Module):
         # use the attention function specified by the user
         x = self.attn_fn(q, k, v)
         # permute output according to the specified format
-        print(x.shape)
         x = self.permute_attn(x).reshape(B, N, C)
         x = self.proj(x)
         x = x + x_in
