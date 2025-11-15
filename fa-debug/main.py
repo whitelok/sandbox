@@ -203,3 +203,12 @@ for backend in ['flash_sdp', 'mem_efficient_sdp', 'math_sdp', 'cudnn_sdp']:
 # average step time: 0.15109368127391296
 # Compiled PyTorch SDPA - cudnn_sdp
 # average step time: 0.1251297200926476
+
+from flash_attn_interface import flash_attn_func as fa3
+attn_fn = lambda q,k,v: fa3(q,k,v)[0]
+block_fn = functools.partial(MyAttentionBlock,
+                             attn_fn=attn_fn,
+                             format='bshd')
+
+print(f'Flash Attention 3')
+train(block_fn)
