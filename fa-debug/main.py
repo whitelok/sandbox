@@ -206,10 +206,42 @@ def set_sdpa_backend(backend):
 # average step time: 0.1251297200926476
 
 from flash_attn_interface import flash_attn_func as fa3
-attn_fn = lambda q,k,v: fa3(q,k,v)[0]
-block_fn = functools.partial(MyAttentionBlock,
-                             attn_fn=attn_fn,
-                             format='bshd')
 
-print(f'Flash Attention 3')
+attn_fn = lambda q, k, v: fa3(q, k, v)[0]
+block_fn = functools.partial(MyAttentionBlock, attn_fn=attn_fn, format='bshd')
+
+# print(f'Flash Attention 3')
+# train(block_fn)
+
+
+def set_te_backend(backend):
+    # must be applied before first use of
+    # transformer_engine.pytorch.attention
+    os.environ["NVTE_FLASH_ATTN"] = '0'
+    os.environ["NVTE_FUSED_ATTN"] = '0'
+    os.environ["NVTE_UNFUSED_ATTN"] = '0'
+    if backend == 'flash':
+        os.environ["NVTE_FLASH_ATTN"] = '1'
+    if backend == 'fused':
+        os.environ["NVTE_FUSED_ATTN"] = '1'
+    if backend == 'unfused':
+        os.environ["NVTE_UNFUSED_ATTN"] = '1'
+
+
+from transformer_engine.pytorch.attention import DotProductAttention
+
+set_te_backend('fused')
+attn_fn = DotProductAttention(
+    NUM_HEADS,
+    HEAD_DIM,
+    NUM_HEADS,
+    qkv_format='bshd',
+    # disable masking (default is causal mask)
+    attn_mask_type='no_mask')
+
+block_fn = functools.partial(MyAttentionBlock, attn_fn=attn_fn, format='bshd')
+
+print(f'Transformer Engine Attention')
 train(block_fn)
+print(f'Compiled Transformer Engine Attention')
+train_compile(block_fn)
