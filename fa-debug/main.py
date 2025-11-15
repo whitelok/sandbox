@@ -181,3 +181,25 @@ for backend in ['flash_sdp', 'mem_efficient_sdp', 'math_sdp', 'cudnn_sdp']:
     train(block_fn)
     print(f'Compiled PyTorch SDPA - {backend}')
     train_compile(block_fn)
+
+# On H800
+# Default Attention
+# average step time: 0.21055106373710764
+# Compiled Default Attention
+# average step time: 0.14639362610048717
+# PyTorch SDPA - flash_sdp
+# average step time: 0.15548780100581086
+# Compiled PyTorch SDPA - flash_sdp
+# average step time: 0.1245085693274935
+# PyTorch SDPA - mem_efficient_sdp
+# average step time: 0.1656758638880687
+# Compiled PyTorch SDPA - mem_efficient_sdp
+# average step time: 0.12491342905954814
+# PyTorch SDPA - math_sdp
+# average step time: 0.2337989888648376
+# Compiled PyTorch SDPA - math_sdp
+# average step time: 0.12511442383222374
+# PyTorch SDPA - cudnn_sdp
+# average step time: 0.15109368127391296
+# Compiled PyTorch SDPA - cudnn_sdp
+# average step time: 0.1251297200926476
