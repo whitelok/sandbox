@@ -75,3 +75,64 @@ class FakeDataset(Dataset):
         rand_image = torch.randn([3, IMG_SIZE, IMG_SIZE], dtype=torch.float32)
         label = torch.tensor(data=index % 1000, dtype=torch.int64)
         return rand_image, label
+
+
+def train_fn(block_fn, compile):
+    torch.random.manual_seed(0)
+    device = torch.device("cuda:0")
+    torch.set_float32_matmul_precision("high")
+
+    # Create dataset and dataloader
+    train_set = FakeDataset()
+    train_loader = DataLoader(train_set,
+                              batch_size=BATCH_SIZE,
+                              num_workers=12,
+                              pin_memory=True,
+                              drop_last=True)
+
+    model = VisionTransformer(img_size=IMG_SIZE,
+                              patch_size=PATCH_SIZE,
+                              embed_dim=NUM_HEADS * HEAD_DIM,
+                              depth=DEPTH,
+                              num_heads=NUM_HEADS,
+                              class_token=False,
+                              global_pool="avg",
+                              block_fn=block_fn).to(device)
+
+    if compile:
+        model = torch.compile(model)
+
+    # Define loss and optimizer
+    criterion = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters())
+
+    model.train()
+
+    t0 = time.perf_counter()
+    summ = 0
+    count = 0
+    for step, data in enumerate(train_loader):
+        # Copy data to GPU
+        inputs = data[0].to(device=device, non_blocking=True)
+        label = data[1].to(device=device, non_blocking=True)
+        with torch.amp.autocast('cuda', enabled=True, dtype=torch.bfloat16):
+            outputs = model(inputs)
+            loss = criterion(outputs, label)
+        optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        optimizer.step()
+
+        # Capture step time
+        batch_time = time.perf_counter() - t0
+        if step > 20:  # Skip first steps
+            summ += batch_time
+            count += 1
+        t0 = time.perf_counter()
+        if step > 100:
+            break
+    print(f'average step time: {summ / count}')
+
+
+# define compiled and uncompiled variants of our train function
+train = functools.partial(train_fn, compile=False)
+train_compile = functools.partial(train_fn, compile=True)
