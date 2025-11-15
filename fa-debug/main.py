@@ -149,10 +149,10 @@ def attn_fn(q, k, v):
 
 block_fn = functools.partial(MyAttentionBlock, attn_fn=attn_fn)
 
-print('Default Attention')
-train(block_fn)
-print('Compiled Default Attention')
-train_compile(block_fn)
+# print('Default Attention')
+# train(block_fn)
+# print('Compiled Default Attention')
+# train_compile(block_fn)
 
 from torch.nn.functional import scaled_dot_product_attention as sdpa
 
@@ -173,14 +173,14 @@ def set_sdpa_backend(backend):
         torch.backends.cuda.enable_cudnn_sdp(True)
 
 
-for backend in ['flash_sdp', 'mem_efficient_sdp', 'math_sdp', 'cudnn_sdp']:
-    set_sdpa_backend(backend)
-    block_fn = functools.partial(MyAttentionBlock, attn_fn=sdpa)
+# for backend in ['flash_sdp', 'mem_efficient_sdp', 'math_sdp', 'cudnn_sdp']:
+#     set_sdpa_backend(backend)
+#     block_fn = functools.partial(MyAttentionBlock, attn_fn=sdpa)
 
-    print(f'PyTorch SDPA - {backend}')
-    train(block_fn)
-    print(f'Compiled PyTorch SDPA - {backend}')
-    train_compile(block_fn)
+#     print(f'PyTorch SDPA - {backend}')
+#     train(block_fn)
+#     print(f'Compiled PyTorch SDPA - {backend}')
+#     train_compile(block_fn)
 
 # On H800
 # Default Attention
