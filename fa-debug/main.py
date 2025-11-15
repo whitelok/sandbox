@@ -136,3 +136,20 @@ def train_fn(block_fn, compile):
 # define compiled and uncompiled variants of our train function
 train = functools.partial(train_fn, compile=False)
 train_compile = functools.partial(train_fn, compile=True)
+
+
+def attn_fn(q, k, v):
+    scale = HEAD_DIM**-0.5
+    q = q * scale
+    attn = q @ k.transpose(-2, -1)
+    attn = attn.softmax(dim=-1)
+    x = attn @ v
+    return x
+
+
+block_fn = functools.partial(MyAttentionBlock, attn_fn=attn_fn)
+
+print('Default Attention')
+train(block_fn)
+print('Compiled Default Attention')
+train_compile(block_fn)
